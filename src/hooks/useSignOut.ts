@@ -6,7 +6,7 @@ export const useSignOut = () => {
 	const router = useRouter();
 
 	async function signOut() {
-		router.push("/sign-in");
+		await router.push("/sign-in");
 		await auth.signOut();
 	}
 
