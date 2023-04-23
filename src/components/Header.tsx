@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import { HeaderDropdown } from "~/components/HeaderDropdown";
@@ -7,6 +5,7 @@ import { HeaderDropdown } from "~/components/HeaderDropdown";
 export const Header = () => {
 	const user = {
 		id: "123",
+		email: "test@gmail.com",
 	};
 
 	const fullName = "John Doe";
@@ -29,6 +28,7 @@ export const Header = () => {
 						imageUrl="https://picsum.photos/seed/picsum/200/300"
 						userId={user.id}
 						fullName={fullName}
+						email={user.email}
 					/>
 				</div>
 			</nav>
