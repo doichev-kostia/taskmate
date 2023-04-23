@@ -11,7 +11,7 @@ export const Header = () => {
 	const fullName = "John Doe";
 
 	return (
-		<header>
+		<header className="border-b border-solid border-slate-600 ">
 			<nav className="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between p-4">
 				<Link href="/" className="flex items-center">
 					<img
