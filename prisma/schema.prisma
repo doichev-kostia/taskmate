@@ -16,6 +16,7 @@ model Board {
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 	name String
+	imageUrl String?
 
 	members Member[]
 	issues Issue[]
