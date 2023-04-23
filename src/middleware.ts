@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 // Set the paths that don't require the user to be signed in
 const publicPaths = ["/sign-in*", "/sign-up*"];
+const isApi = (path: string) => path.startsWith("/api");
 
 const isPublic = (path: string) => {
 	return publicPaths.find((x) =>
@@ -12,7 +13,7 @@ const isPublic = (path: string) => {
 };
 
 export default withClerkMiddleware((request: NextRequest) => {
-	if (isPublic(request.nextUrl.pathname)) {
+	if (isPublic(request.nextUrl.pathname) || isApi(request.nextUrl.pathname)) {
 		return NextResponse.next();
 	}
 	// if the user is not signed in redirect them to the sign in page.
@@ -39,7 +40,7 @@ export const config = {
 		 * - public folder
 		 * - public folder
 		 */
-		"/((?!static|.*\\..*|_next|favicon.ico).*)",
+		"/(.*?trpc.*?|(?!static|.*\\..*|_next|favicon.ico).*)",
 		"/",
 	],
 };
