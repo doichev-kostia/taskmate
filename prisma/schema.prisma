@@ -20,12 +20,25 @@ model Board {
 
 	members Member[]
 	issues Issue[]
+	invites Invite[]
 }
+
 
 enum MemberRole {
 	OWNER
 	ADMIN
 	MEMBER
+}
+
+model Invite {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	email String
+	role MemberRole
+
+	boardId String @db.Uuid
+	board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
 }
 
 model Member {
