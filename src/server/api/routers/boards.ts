@@ -17,6 +17,14 @@ export const boardsRouter = createTRPCRouter({
 				},
 			});
 
+			await ctx.prisma.member.create({
+				data: {
+					boardId: board.id,
+					userId: ctx.auth.userId,
+					role: "OWNER",
+				},
+			});
+
 			return board;
 		}),
 	updateBoard: privateProcedure
