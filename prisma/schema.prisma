@@ -11,8 +11,87 @@ datasource db {
     directUrl = env("DIRECT_URL")
 }
 
-model Example {
-    id        String   @id @default(cuid())
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+model Board {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	name String
+
+	members Member[]
+	issues Issue[]
+}
+
+enum MemberRole {
+	OWNER
+	ADMIN
+	MEMBER
+}
+
+model Member {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	role MemberRole
+	userId String
+
+
+	boardId String @db.Uuid
+	board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+	issues Issue[]
+
+	assignees Assignee[]
+	comments Comment[]
+}
+
+enum Status {
+	BACKLOG
+	TO_DO
+	IN_PROGRESS
+	DONE
+	CANCELLED
+}
+
+model Issue {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	title String
+	description String
+	status Status @default(BACKLOG)
+
+
+	creatorId String? @db.Uuid
+	creator Member? @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+
+	boardId String @db.Uuid
+	board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+	assignees Assignee[]
+	comments Comment[]
+}
+
+model Assignee {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+
+	issueId String @db.Uuid
+	issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+	memberId String @db.Uuid
+	member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+	id String @id @default(uuid()) @db.Uuid
+	createdAt DateTime @default(now())
+	updatedAt DateTime @updatedAt
+	content String
+
+	issueId String @db.Uuid
+	issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+	creatorId String @db.Uuid
+	creator Member @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 }
