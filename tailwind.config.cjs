@@ -3,7 +3,7 @@
  */
 const config = {
 	content: ["./src/**/*.{js,ts,jsx,tsx}"],
-	important: "#__next ",
+	important: "#app",
 	theme: {
 		extend: {}
 

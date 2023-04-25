@@ -1,14 +1,29 @@
 import React from "react";
 import Link from "next/link";
 import { HeaderDropdown } from "~/components/HeaderDropdown";
+import { useUser } from "@clerk/nextjs";
+
+const getFullName = (firstName?: string | null, lastName?: string | null) => {
+	if (!firstName && !lastName) {
+		return "Me";
+	}
+
+	if (!firstName) {
+		return `Mr or Ms ${lastName}`;
+	}
+
+	if (!lastName) {
+		return firstName;
+	}
+
+	return `${firstName} ${lastName}`;
+};
 
 export const Header = () => {
-	const user = {
-		id: "123",
-		email: "test@gmail.com",
-	};
+	const { user } = useUser();
 
-	const fullName = "John Doe";
+	const fullName =
+		user?.fullName ?? getFullName(user?.firstName, user?.lastName);
 
 	return (
 		<header className="border-b border-solid border-slate-600 ">
@@ -24,12 +39,13 @@ export const Header = () => {
 					</span>
 				</Link>
 				<div className="flex items-center md:order-2">
-					<HeaderDropdown
-						imageUrl="https://picsum.photos/seed/picsum/200/300"
-						userId={user.id}
-						fullName={fullName}
-						email={user.email}
-					/>
+					{user && (
+						<HeaderDropdown
+							imageUrl={user.profileImageUrl}
+							userId={user.id}
+							fullName={fullName}
+						/>
+					)}
 				</div>
 			</nav>
 		</header>

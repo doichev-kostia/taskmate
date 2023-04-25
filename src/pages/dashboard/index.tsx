@@ -18,7 +18,7 @@ const DashboardPage = () => {
 			<Head>
 				<title>Taskmate | Dashboard</title>
 			</Head>
-			<div className="px-4 py-3">
+			<div className="mx-auto max-w-screen-xl px-4 py-3">
 				<div className="mb-6 flex items-center justify-between">
 					<h1 className="text-4xl text-white">Dashboard</h1>
 					<Button as={Link} href="/boards/new" colorScheme="brand">

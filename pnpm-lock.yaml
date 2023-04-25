@@ -1,10 +1,14 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@chakra-ui/avatar': ^2.2.8
   '@chakra-ui/card': ^2.1.6
+  '@chakra-ui/icons': ^2.0.18
   '@chakra-ui/menu': ^2.1.12
+  '@chakra-ui/modal': ^2.2.11
   '@chakra-ui/next-js': ^2.1.2
   '@chakra-ui/react': ^2.5.5
+  '@chakra-ui/select': ^2.0.19
   '@chakra-ui/system': ^2.5.5
   '@clerk/backend': ^0.17.2
   '@clerk/nextjs': ^4.16.4
@@ -46,10 +50,14 @@ specifiers:
   zod: ^3.21.4
 
 dependencies:
+  '@chakra-ui/avatar': 2.2.8_lze4h7kxffpjhokvtqbtrlfkmq
   '@chakra-ui/card': 2.1.6_lze4h7kxffpjhokvtqbtrlfkmq
+  '@chakra-ui/icons': 2.0.18_lze4h7kxffpjhokvtqbtrlfkmq
   '@chakra-ui/menu': 2.1.12_dcrus3ehc3sd264azprsq35dm4
+  '@chakra-ui/modal': 2.2.11_bonnl35s4sfg5yslayldt5rwgy
   '@chakra-ui/next-js': 2.1.2_lmwjeah3gf7utx5idxb3x7qrhm
   '@chakra-ui/react': 2.5.5_7nz6iklpxwyvhsuna2oenzac4e
+  '@chakra-ui/select': 2.0.19_lze4h7kxffpjhokvtqbtrlfkmq
   '@chakra-ui/system': 2.5.5_xqp3pgpqjlfxxa3zxu4zoc4fba
   '@clerk/backend': 0.17.2
   '@clerk/nextjs': 4.16.4_ivamjty3az7dj3hhadhjniqtwe
@@ -402,6 +410,17 @@ packages:
       react: '>=18'
     dependencies:
       '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.5.5_xqp3pgpqjlfxxa3zxu4zoc4fba
+      react: 18.2.0
+    dev: false
+
+  /@chakra-ui/icons/2.0.18_lze4h7kxffpjhokvtqbtrlfkmq:
+    resolution: {integrity: sha512-E/+DF/jw7kdN4/XxCZRnr4FdMXhkl50Q34MVwN9rADWMwPK9uSZPGyC7HOx6rilo7q4bFjYDH3yRj9g+VfbVkg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/icon': 3.0.16_lze4h7kxffpjhokvtqbtrlfkmq
       '@chakra-ui/system': 2.5.5_xqp3pgpqjlfxxa3zxu4zoc4fba
       react: 18.2.0
     dev: false

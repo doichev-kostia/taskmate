@@ -7,7 +7,7 @@ export default class Document extends NextDocument {
 		return (
 			<Html lang="en">
 				<Head />
-				<body className="bg-slate-900 text-gray-200">
+				<body className="bg-slate-900 text-gray-200" id="app">
 					<ColorModeScript
 						initialColorMode={theme.config.initialColorMode}
 					/>

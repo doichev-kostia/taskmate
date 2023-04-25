@@ -14,7 +14,7 @@ export const hasBoardEditRightsRequirement = async ({
 			id: boardId,
 			members: {
 				some: {
-					id: userId,
+					userId,
 					role: {
 						in: ["ADMIN", "OWNER"],
 					},

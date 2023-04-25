@@ -6,14 +6,12 @@ type HeaderDropdownProps = {
 	imageUrl: string;
 	userId: string;
 	fullName: string;
-	email: string;
 };
 
 export const HeaderDropdown = ({
 	imageUrl,
 	userId,
 	fullName,
-	email,
 }: HeaderDropdownProps) => {
 	return (
 		<Menu>
@@ -43,13 +41,6 @@ export const HeaderDropdown = ({
 							href="/dashboard"
 						>
 							Dashboard
-						</MenuItem>
-						<MenuItem
-							className="bg-slate-800"
-							as={Link}
-							href={`/users/${userId}`}
-						>
-							Profile
 						</MenuItem>
 						<MenuItem
 							className="bg-slate-800"

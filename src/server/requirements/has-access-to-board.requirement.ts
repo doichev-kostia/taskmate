@@ -14,7 +14,7 @@ export const hasAccessToBoardRequirement = async ({
 			id: boardId,
 			members: {
 				some: {
-					id: userId,
+					userId,
 				},
 			},
 		},

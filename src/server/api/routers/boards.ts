@@ -69,12 +69,11 @@ export const boardsRouter = createTRPCRouter({
 			const invite = await ctx.prisma.invite.create({
 				data: {
 					boardId: input.boardId,
-					email: input.invite.email,
 					role: input.invite.role,
 				},
 			});
 
-			// send email with invite link
+			return invite;
 		}),
 	getBoards: privateProcedure.query(async function getBoards({ ctx }) {
 		const boards = await ctx.prisma.board.findMany({
@@ -103,6 +102,11 @@ export const boardsRouter = createTRPCRouter({
 			const board = await ctx.prisma.board.findUnique({
 				where: {
 					id: input,
+				},
+				include: {
+					members: true,
+					issues: true,
+					invites: true,
 				},
 			});
 

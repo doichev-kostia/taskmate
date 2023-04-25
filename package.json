@@ -10,10 +10,14 @@
 		"start": "next start"
 	},
 	"dependencies": {
+		"@chakra-ui/avatar": "^2.2.8",
 		"@chakra-ui/card": "^2.1.6",
+		"@chakra-ui/icons": "^2.0.18",
 		"@chakra-ui/menu": "^2.1.12",
+		"@chakra-ui/modal": "^2.2.11",
 		"@chakra-ui/next-js": "^2.1.2",
 		"@chakra-ui/react": "^2.5.5",
+		"@chakra-ui/select": "^2.0.19",
 		"@chakra-ui/system": "^2.5.5",
 		"@clerk/backend": "^0.17.2",
 		"@clerk/nextjs": "^4.16.4",

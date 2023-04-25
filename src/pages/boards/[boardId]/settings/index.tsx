@@ -1,19 +1,50 @@
 import React, { useState } from "react";
 import { PrivateLayout } from "~/layouts/PrivateLayout";
+import { useRouter } from "next/router";
+import { z } from "zod";
+import { useUser } from "@clerk/nextjs";
+import { api } from "~/utils/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BoardBodyValidator } from "~/contracts/board.body.validator";
 import { Button, FormControl, FormLabel, Input } from "@chakra-ui/react";
-import { z } from "zod";
-import { api } from "~/utils/api";
-import { useRouter } from "next/router";
-import { toast } from "react-toastify";
 import { BOARD_IMAGES } from "~/utils/constants";
 import { cx } from "~/styles/cx";
+import { isBrowser } from "~/utils/isBrowser";
+import { createParamsParser } from "~/utils/createParamsParser";
 
-type Values = z.infer<typeof BoardBodyValidator>;
+type Values = Partial<z.infer<typeof BoardBodyValidator>>;
 
-function CreateBoardPage() {
+function BoardSettingsPage() {
+	const router = useRouter();
+	const browser = isBrowser();
+
+	const { boardId } = createParamsParser(
+		{
+			boardId: z.string().uuid(),
+		},
+		router.query
+	);
+
+	const { user } = useUser();
+
+	const {
+		data: board,
+		isLoading: isBoardLoading,
+		isError,
+	} = api.boards.getBoard.useQuery(boardId ?? "");
+
+	const { data: member, isLoading: isMemberLoading } =
+		api.members.getMember.useQuery({
+			userId: user?.id,
+		});
+
+	const { mutateAsync: updateBoard, isLoading: isUpdating } =
+		api.boards.updateBoard.useMutation();
+
+	const { mutateAsync: removeBoard } = api.boards.removeBoard.useMutation();
+	const { mutateAsync: leaveBoard } = api.boards.removeMember.useMutation();
+
 	const {
 		register,
 		handleSubmit,
@@ -21,36 +52,51 @@ function CreateBoardPage() {
 		setValue,
 		getValues,
 	} = useForm<Values>({
-		resolver: zodResolver(BoardBodyValidator),
+		resolver: zodResolver(BoardBodyValidator.partial()),
+		defaultValues: {
+			name: board?.name,
+			imageUrl: board?.imageUrl,
+		},
+	});
+
+	const onSubmit = handleSubmit(async (data) => {
+		await updateBoard({
+			id: boardId,
+			board: data,
+		});
 	});
 
 	const [chosenImage, setChosenImage] = useState<string | undefined>(
-		undefined
+		board?.imageUrl
 	);
 
-	const router = useRouter();
-
-	const { mutateAsync: createBoard } = api.boards.createBoard.useMutation();
-
-	const onSubmit = handleSubmit(async (data) => {
-		try {
-			await createBoard({
-				imageUrl: data.imageUrl,
-				name: data.name,
-			});
-			await router.push("/dashboard");
-		} catch (error) {
-			console.error(error);
-			toast.error("Something went wrong. Please try again later.");
+	const handleDelete = async () => {
+		if (member?.role === "OWNER") {
+			await removeBoard(boardId ?? "");
+		} else {
+			await leaveBoard(boardId);
 		}
-	});
+
+		await router.push("/dashboard");
+	};
 
 	return (
 		<PrivateLayout>
-			<section className="px-4 py-3">
-				<h1 className="mb-4 text-2xl text-white md:text-4xl">
-					Create a board
-				</h1>
+			<section className="mx-auto max-w-screen-xl px-4 py-3">
+				<div className="mb-4 flex items-center justify-between gap-5">
+					<h1 className=" text-2xl text-white md:text-4xl">
+						Board settings
+					</h1>
+					<Button
+						isLoading={isMemberLoading}
+						onClick={handleDelete}
+						colorScheme="red"
+					>
+						{member?.role === "OWNER"
+							? "Delete board"
+							: "Leave board"}
+					</Button>
+				</div>
 
 				<div className="mx-auto max-w-md">
 					<form onSubmit={onSubmit}>
@@ -100,8 +146,12 @@ function CreateBoardPage() {
 						</div>
 
 						<div className="flex justify-center">
-							<Button type="submit" colorScheme="brand">
-								Create
+							<Button
+								type="submit"
+								colorScheme="brand"
+								isLoading={isUpdating}
+							>
+								Update
 							</Button>
 						</div>
 					</form>
@@ -111,4 +161,4 @@ function CreateBoardPage() {
 	);
 }
 
-export default CreateBoardPage;
+export default BoardSettingsPage;

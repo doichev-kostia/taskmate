@@ -7,8 +7,9 @@ generator client {
 
 datasource db {
     provider  = "postgresql"
-    url       = env("DATABASE_URL")
-    directUrl = env("DIRECT_URL")
+    // url       = env("DATABASE_URL")
+    // directUrl = env("DIRECT_URL")
+    url = env("DIRECT_URL")
 }
 
 model Board {
@@ -16,7 +17,7 @@ model Board {
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
 	name String
-	imageUrl String?
+	imageUrl String
 
 	members Member[]
 	issues Issue[]
@@ -34,7 +35,6 @@ model Invite {
 	id String @id @default(uuid()) @db.Uuid
 	createdAt DateTime @default(now())
 	updatedAt DateTime @updatedAt
-	email String
 	role MemberRole
 
 	boardId String @db.Uuid
