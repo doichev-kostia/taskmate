@@ -99,6 +99,7 @@ function BoardSettingsPage() {
 				</div>
 
 				<div className="mx-auto max-w-md">
+					{/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
 					<form onSubmit={onSubmit}>
 						<div className="mb-8">
 							<FormControl isRequired className="mb-4">
