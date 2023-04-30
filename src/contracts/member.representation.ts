@@ -4,7 +4,7 @@ import { MemberRole } from "@prisma/client";
 export const MemberRepresentation = z.object({
 	id: z.string().uuid(),
 	role: z.enum(Object.values(MemberRole)),
-	userId: z.string().uuid(),
+	userId: z.string(),
 	boardId: z.string().uuid(),
 });
 
