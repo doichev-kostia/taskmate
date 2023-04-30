@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Status } from "@prisma/client";
 
-export const IssueRepresentation = z.object({
+export const IssueRepresentationValidator = z.object({
 	id: z.string().uuid(),
 	createdAt: z.date(),
 	updatedAt: z.date(),

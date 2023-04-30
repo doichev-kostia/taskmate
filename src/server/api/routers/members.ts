@@ -1,12 +1,12 @@
 import { createTRPCRouter, privateProcedure } from "~/server/api/trpc";
 import { MemberBodyValidator } from "~/contracts/member.body.validator";
 import { TRPCError } from "@trpc/server";
-import { MemberRepresentation } from "~/contracts/member.representation";
+import { MemberRepresentationValidator } from "~/contracts/member.representation.validator";
 
 export const memberRouter = createTRPCRouter({
 	getMember: privateProcedure
 		.input(MemberBodyValidator)
-		.output(MemberRepresentation)
+		.output(MemberRepresentationValidator)
 		.query(async function getMember({ ctx, input }) {
 			const { id, userId } = input;
 

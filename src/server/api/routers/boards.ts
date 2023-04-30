@@ -7,14 +7,17 @@ import { TRPCError } from "@trpc/server";
 import { hasBoardEditRightsRequirement } from "~/server/requirements/has-board-edit-rights.requirement";
 import clerk from "@clerk/clerk-sdk-node";
 import { UpdateMemberBodyValidator } from "~/contracts/update-member.body.validator";
-import { BoardDetailedRepresentation, BoardRepresentation } from "~/contracts/board.representation";
-import { MemberRepresentation } from "~/contracts/member.representation";
-import { InviteRepresentation } from "~/contracts/invite.representation";
+import {
+	BoardDetailedRepresentationValidator,
+	BoardRepresentationValidator,
+} from "~/contracts/board.representation.validator";
+import { MemberRepresentationValidator } from "~/contracts/member.representation.validator";
+import { InviteRepresentationValidator } from "~/contracts/invite.representation.validator";
 
 export const boardsRouter = createTRPCRouter({
 	createBoard: privateProcedure
 		.input(BoardBodyValidator)
-		.output(BoardRepresentation)
+		.output(BoardRepresentationValidator)
 		.mutation(async function createBoard({ ctx, input }) {
 			const board = await ctx.prisma.board.create({
 				data: {
@@ -40,7 +43,7 @@ export const boardsRouter = createTRPCRouter({
 				board: BoardBodyValidator.partial(),
 			})
 		)
-		.output(BoardRepresentation)
+		.output(BoardRepresentationValidator)
 		.use(async function updateBoardRequirements({ ctx, input, next }) {
 			await hasBoardEditRightsRequirement({
 				userId: ctx.auth.userId,
@@ -64,7 +67,7 @@ export const boardsRouter = createTRPCRouter({
 		}),
 	updateMember: privateProcedure
 		.input(UpdateMemberBodyValidator)
-		.output(MemberRepresentation)
+		.output(MemberRepresentationValidator)
 		.use(async function attachMemberRequirements({ ctx, input, next }) {
 			await hasBoardEditRightsRequirement({
 				userId: ctx.auth.userId,
@@ -87,7 +90,7 @@ export const boardsRouter = createTRPCRouter({
 		}),
 	attachMember: privateProcedure
 		.input(AttachMemberBodyValidator)
-		.output(InviteRepresentation)
+		.output(InviteRepresentationValidator)
 		.use(async function attachMemberRequirements({ ctx, input, next }) {
 			await hasBoardEditRightsRequirement({
 				userId: ctx.auth.userId,
@@ -106,7 +109,7 @@ export const boardsRouter = createTRPCRouter({
 
 			return invite;
 		}),
-	getBoards: privateProcedure.output(z.array(BoardRepresentation)).query(async function getBoards({ ctx }) {
+	getBoards: privateProcedure.output(z.array(BoardRepresentationValidator)).query(async function getBoards({ ctx }) {
 		const boards = await ctx.prisma.board.findMany({
 			where: {
 				members: {
@@ -121,7 +124,7 @@ export const boardsRouter = createTRPCRouter({
 	}),
 	getBoard: privateProcedure
 		.input(z.string())
-		.output(BoardDetailedRepresentation)
+		.output(BoardDetailedRepresentationValidator)
 		.use(async function getBoardRequirements({ ctx, input, next }) {
 			await hasAccessToBoardRequirement({
 				userId: ctx.auth.userId,
