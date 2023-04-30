@@ -5,28 +5,28 @@ import { hasAccessToBoardRequirement } from "~/server/requirements/has-access-to
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { hasBoardEditRightsRequirement } from "~/server/requirements/has-board-edit-rights.requirement";
+import clerk from "@clerk/clerk-sdk-node";
+import { UpdateMemberBodyValidator } from "~/contracts/update-member.body.validator";
 
 export const boardsRouter = createTRPCRouter({
-	createBoard: privateProcedure
-		.input(BoardBodyValidator)
-		.mutation(async function createBoard({ ctx, input }) {
-			const board = await ctx.prisma.board.create({
-				data: {
-					name: input.name,
-					imageUrl: input.imageUrl,
-				},
-			});
+	createBoard: privateProcedure.input(BoardBodyValidator).mutation(async function createBoard({ ctx, input }) {
+		const board = await ctx.prisma.board.create({
+			data: {
+				name: input.name,
+				imageUrl: input.imageUrl,
+			},
+		});
 
-			await ctx.prisma.member.create({
-				data: {
-					boardId: board.id,
-					userId: ctx.auth.userId,
-					role: "OWNER",
-				},
-			});
+		await ctx.prisma.member.create({
+			data: {
+				boardId: board.id,
+				userId: ctx.auth.userId,
+				role: "OWNER",
+			},
+		});
 
-			return board;
-		}),
+		return board;
+	}),
 	updateBoard: privateProcedure
 		.input(
 			z.object({
@@ -54,6 +54,28 @@ export const boardsRouter = createTRPCRouter({
 			});
 
 			return board;
+		}),
+	updateMember: privateProcedure
+		.input(UpdateMemberBodyValidator)
+		.use(async function attachMemberRequirements({ ctx, input, next }) {
+			await hasBoardEditRightsRequirement({
+				userId: ctx.auth.userId,
+				boardId: input.boardId,
+			});
+
+			return next();
+		})
+		.mutation(async function updateMember({ ctx, input }) {
+			const member = await ctx.prisma.member.update({
+				where: {
+					id: input.memberId,
+				},
+				data: {
+					role: input.role,
+				},
+			});
+
+			return member;
 		}),
 	attachMember: privateProcedure
 		.input(AttachMemberBodyValidator)
@@ -115,6 +137,18 @@ export const boardsRouter = createTRPCRouter({
 					code: "NOT_FOUND",
 				});
 			}
+
+			board.members = await Promise.all(
+				board.members.map(async (member) => {
+					const user = await clerk.users.getUser(member.userId);
+					return {
+						...member,
+						profileImageUrl: user.profileImageUrl,
+						firstName: user.firstName,
+						lastName: user.lastName,
+					};
+				})
+			);
 
 			return board;
 		}),
