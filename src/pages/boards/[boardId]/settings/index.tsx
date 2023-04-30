@@ -28,9 +28,12 @@ function BoardSettingsPage() {
 
 	const { user } = useUser();
 
-	const { data: board, refetch } = api.boards.getBoard.useQuery(boardId, {
-		enabled: !!boardId,
-	});
+	const { data: board, refetch } = api.boards.getBoard.useQuery(
+		{ boardId },
+		{
+			enabled: !!boardId,
+		}
+	);
 
 	const { data: member, isLoading: isMemberLoading } = api.members.getMember.useQuery(
 		{

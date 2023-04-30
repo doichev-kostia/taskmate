@@ -123,12 +123,24 @@ export const boardsRouter = createTRPCRouter({
 		return boards;
 	}),
 	getBoard: privateProcedure
-		.input(z.string())
+		.input(
+			z.object({
+				boardId: z.string().uuid(),
+				options: z
+					.object({
+						includeCancelled: z.boolean(),
+					})
+					.optional()
+					.default({
+						includeCancelled: false,
+					}),
+			})
+		)
 		.output(BoardDetailedRepresentationValidator)
 		.use(async function getBoardRequirements({ ctx, input, next }) {
 			await hasAccessToBoardRequirement({
 				userId: ctx.auth.userId,
-				boardId: input,
+				boardId: input.boardId,
 			});
 
 			return next();
@@ -136,11 +148,19 @@ export const boardsRouter = createTRPCRouter({
 		.query(async function getBoard({ ctx, input }) {
 			const board = await ctx.prisma.board.findUnique({
 				where: {
-					id: input,
+					id: input.boardId,
 				},
 				include: {
 					members: true,
-					issues: true,
+					issues: {
+						where: {
+							status: input.options?.includeCancelled
+								? undefined
+								: {
+										not: "CANCELLED",
+								  },
+						},
+					},
 				},
 			});
 

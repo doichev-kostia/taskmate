@@ -42,9 +42,12 @@ function BoardPage() {
 
 	const { user } = useUser();
 
-	const { data, isLoading, isError } = api.boards.getBoard.useQuery(boardId, {
-		enabled: !!boardId,
-	});
+	const { data, isLoading, isError } = api.boards.getBoard.useQuery(
+		{ boardId },
+		{
+			enabled: !!boardId,
+		}
+	);
 	const {
 		mutateAsync: attachMember,
 		isLoading: isAttaching,
@@ -118,20 +121,22 @@ function BoardPage() {
 					</div>
 				)}
 
-				{isLoading ? (
-					<div>Loading...</div>
-				) : isError ? (
-					<div>Something went wrong. Please try again later.</div>
-				) : (
-					<section className="flex-1">
-						<div className="flex h-full">
-							<BoardColumn id="BACKLOG" name="Backlog" issues={[]} className="flex-1" />
-							<BoardColumn id="TO_DO" name="Todo" issues={[]} className="flex-1" />
-							<BoardColumn id="IN_PROGRESS" name="In progress" issues={[]} className="flex-1" />
-							<BoardColumn id="DONE" name="Done" issues={[]} className="flex-1" />
-						</div>
-					</section>
-				)}
+				<section className="flex-1">
+					<div className="flex h-full">
+						{isLoading ? (
+							<div>Loading...</div>
+						) : isError ? (
+							<div>Something went wrong. Please try again later.</div>
+						) : (
+							<>
+								<BoardColumn id="BACKLOG" name="Backlog" issues={[]} className="flex-1" />
+								<BoardColumn id="TO_DO" name="Todo" issues={[]} className="flex-1" />
+								<BoardColumn id="IN_PROGRESS" name="In progress" issues={[]} className="flex-1" />
+								<BoardColumn id="DONE" name="Done" issues={[]} className="flex-1" />
+							</>
+						)}
+					</div>
+				</section>
 				<Modal isOpen={isAddMemberModalOpen} onClose={() => setIsAddMemberModalOpen(false)}>
 					<ModalOverlay />
 					<ModalContent height="300px">
