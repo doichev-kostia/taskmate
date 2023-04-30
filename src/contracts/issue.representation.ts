@@ -3,11 +3,11 @@ import { Status } from "@prisma/client";
 
 export const IssueRepresentation = z.object({
 	id: z.string().uuid(),
-	createdAt: z.string().datetime(),
-	updatedAt: z.string().datetime(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
 	title: z.string(),
 	description: z.string(),
 	status: z.enum(Object.values(Status)),
-	creatorId: z.string().uuid().optional(),
+	creatorId: z.string().uuid().nullish(),
 	boardId: z.string().uuid(),
 });
