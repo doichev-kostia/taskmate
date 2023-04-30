@@ -23,6 +23,7 @@ import { createParamsParser } from "~/utils/createParamsParser";
 import { type MemberRole } from "@prisma/client";
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
 import { toast } from "react-toastify";
+import { getFullName } from "~/utils/getFullName";
 
 const createInviteLink = (inviteId: string) => {
 	return new URL(`/invites/${inviteId}`, window.location.origin).toString();
@@ -90,14 +91,15 @@ function BoardPage() {
 						</div>
 						<div className="flex items-center justify-between">
 							<div className="flex gap-x-5">
-								<AvatarGroup size="sm" max={1}>
-									<Avatar
-										name={user?.fullName ?? "Me"}
-										src={user?.profileImageUrl}
-										title={user?.fullName ?? "Me"}
-									/>
+								<AvatarGroup size="sm" max={3}>
+									<Avatar name={"Me"} src={user?.profileImageUrl} title={"Me"} />
 									{members.map((member) => (
-										<Avatar key={member.id} />
+										<Avatar
+											key={member.id}
+											name={getFullName(member.firstName, member.lastName) ?? undefined}
+											src={member?.profileImageUrl ?? undefined}
+											title={getFullName(member.firstName, member.lastName) ?? undefined}
+										/>
 									))}
 								</AvatarGroup>
 								<IconButton
