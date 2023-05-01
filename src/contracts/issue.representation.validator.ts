@@ -15,6 +15,8 @@ export const IssueRepresentationValidator = z.object({
 	boardId: z.string().uuid(),
 });
 
+export type IssueRepresentation = z.infer<typeof IssueRepresentationValidator>;
+
 export const IssueDetailedRepresentationValidator = IssueRepresentationValidator.extend({
 	assignees: z.array(AssigneeRepresentationValidator),
 	creator: MemberRepresentationValidator.nullish(),
