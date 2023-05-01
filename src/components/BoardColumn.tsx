@@ -1,29 +1,25 @@
 import React from "react";
-import type { Issue, Status } from "@prisma/client";
+import type { Status } from "@prisma/client";
 import { cx } from "~/styles/cx";
+import { type IssueRepresentation } from "~/contracts/issue.representation.validator";
+import { Issue } from "~/components/Issue";
 
 type BoardColumnProps = {
 	id: Status;
 	name: string;
-	issues: Issue[];
+	issues: IssueRepresentation[];
 	className?: string;
 };
 
-export const BoardColumn = ({
-	id,
-	name,
-	className,
-	issues,
-}: BoardColumnProps) => {
+export const BoardColumn = ({ id, name, className, issues }: BoardColumnProps) => {
 	return (
-		<div
-			className={cx(
-				"h-full border-x border-solid border-slate-400 text-center",
-				className
-			)}
-		>
-			<p>{name}</p>
-			<div></div>
+		<div id={id} className={cx("border-x border-solid border-slate-400 text-center", className)}>
+			<p className="border-b border-solid border-slate-500 py-4 text-slate-300">{name}</p>
+			<div className="flex flex-col gap-3 p-2 ">
+				{issues.map((issue) => (
+					<Issue key={issue.id} id={issue.id} title={issue.title} description={issue.description} />
+				))}
+			</div>
 		</div>
 	);
 };
