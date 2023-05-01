@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BoardBodyValidator } from "~/contracts/board.body.validator";
 import { Button, FormControl, FormLabel, Input } from "@chakra-ui/react";
-import { z } from "zod";
+import { type z } from "zod";
 import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
@@ -19,14 +19,11 @@ function CreateBoardPage() {
 		handleSubmit,
 		formState: { errors },
 		setValue,
-		getValues,
 	} = useForm<Values>({
 		resolver: zodResolver(BoardBodyValidator),
 	});
 
-	const [chosenImage, setChosenImage] = useState<string | undefined>(
-		undefined
-	);
+	const [chosenImage, setChosenImage] = useState<string | undefined>(undefined);
 
 	const router = useRouter();
 
@@ -48,9 +45,7 @@ function CreateBoardPage() {
 	return (
 		<PrivateLayout>
 			<section className="px-4 py-3">
-				<h1 className="mb-4 text-2xl text-white md:text-4xl">
-					Create a board
-				</h1>
+				<h1 className="mb-4 text-2xl text-white md:text-4xl">Create a board</h1>
 
 				<div className="mx-auto max-w-md">
 					<form onSubmit={onSubmit}>
@@ -75,9 +70,7 @@ function CreateBoardPage() {
 											tabIndex={0}
 											className={cx(
 												"cursor-pointer overflow-hidden rounded-lg border-2 border-transparent bg-clip-padding outline-1 outline-slate-400",
-												isActive
-													? " border-solid border-slate-400"
-													: ""
+												isActive ? " border-solid border-slate-400" : ""
 											)}
 											key={url}
 											onClick={() => {
@@ -85,18 +78,12 @@ function CreateBoardPage() {
 												setValue("imageUrl", url);
 											}}
 										>
-											<img
-												src={url}
-												alt="board image"
-												className="bg-slate-400 object-contain"
-											/>
+											<img src={url} alt="board image" className="bg-slate-400 object-contain" />
 										</div>
 									);
 								})}
 							</div>
-							<p className="text-sm text-red-600">
-								{errors.imageUrl && "Image is required"}
-							</p>
+							<p className="text-sm text-red-600">{errors.imageUrl && "Image is required"}</p>
 						</div>
 
 						<div className="flex justify-center">
