@@ -6,11 +6,10 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IssueBodyValidator } from "~/contracts/issue.body.validator";
 import { type z } from "zod";
-import dynamic from "next/dynamic";
-import "@uiw/react-md-editor/markdown-editor.css";
-import "@uiw/react-markdown-preview/markdown.css";
+
 import { Status } from "@prisma/client";
-import DOMPurify from "dompurify";
+import { Editor } from "~/components/Editor";
+import { sanitize } from "~/utils/sanilize";
 
 export type CreateIssueModalProps = {
 	boardId: string;
@@ -19,8 +18,6 @@ export type CreateIssueModalProps = {
 };
 
 type Values = Omit<z.infer<typeof IssueBodyValidator>, "boardId">;
-
-const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
 
 export function CreateIssueModal({ boardId, isOpen, onClose }: CreateIssueModalProps) {
 	const { mutateAsync: createIssue, isLoading } = api.issues.create.useMutation();
@@ -38,7 +35,7 @@ export function CreateIssueModal({ boardId, isOpen, onClose }: CreateIssueModalP
 		await createIssue({
 			boardId,
 			title: data.title,
-			description: DOMPurify.sanitize(data.description),
+			description: sanitize(data.description),
 			status: data.status,
 		});
 		await utils.boards.getBoard.invalidate({
@@ -83,7 +80,7 @@ export function CreateIssueModal({ boardId, isOpen, onClose }: CreateIssueModalP
 								control={control}
 								rules={{ required: true }}
 								render={({ field }) => (
-									<MDEditor
+									<Editor
 										data-color-mode="dark"
 										value={field.value}
 										onChange={(value) => {

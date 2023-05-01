@@ -15,10 +15,12 @@ import { AttachMemberModal } from "~/components/AttachMemberModal";
 import CreateIssueModal from "~/components/CreateIssueModal";
 import type { Status } from "@prisma/client";
 import { type IssueRepresentation } from "~/contracts/issue.representation.validator";
+import { IssueModal } from "~/components/IssueModal";
 
 function BoardPage() {
 	const router = useRouter();
 	const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+	const [isIssueCreationModalOpen, setIsIssueCreationModalOpen] = useState(false);
 	const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
 	const { boardId = "" } = createParamsParser(
@@ -93,7 +95,7 @@ function BoardPage() {
 									className="rounded-full"
 								/>
 							</div>
-							<Button colorScheme="brand" size="sm" onClick={() => setIsIssueModalOpen(true)}>
+							<Button colorScheme="brand" size="sm" onClick={() => setIsIssueCreationModalOpen(true)}>
 								Create issue
 							</Button>
 						</div>
@@ -113,24 +115,28 @@ function BoardPage() {
 									name="Backlog"
 									issues={issues.get("BACKLOG") ?? []}
 									className="flex-1"
+									openModal={() => setIsIssueModalOpen(true)}
 								/>
 								<BoardColumn
 									id="TO_DO"
 									name="Todo"
 									issues={issues.get("TO_DO") ?? []}
 									className="flex-1"
+									openModal={() => setIsIssueModalOpen(true)}
 								/>
 								<BoardColumn
 									id="IN_PROGRESS"
 									name="In progress"
 									issues={issues.get("IN_PROGRESS") ?? []}
 									className="flex-1"
+									openModal={() => setIsIssueModalOpen(true)}
 								/>
 								<BoardColumn
 									id="DONE"
 									name="Done"
 									issues={issues.get("DONE") ?? []}
 									className="flex-1"
+									openModal={() => setIsIssueModalOpen(true)}
 								/>
 							</>
 						)}
@@ -143,8 +149,18 @@ function BoardPage() {
 				/>
 				<CreateIssueModal
 					boardId={boardId}
+					isOpen={isIssueCreationModalOpen}
+					onClose={() => setIsIssueCreationModalOpen(false)}
+				/>
+				<IssueModal
 					isOpen={isIssueModalOpen}
-					onClose={() => setIsIssueModalOpen(false)}
+					boardId={boardId}
+					onClose={() => {
+						setIsIssueModalOpen(false);
+						const url = new URL(window.location.href);
+						url.searchParams.delete("issue");
+						void router.replace(url.toString());
+					}}
 				/>
 			</div>
 		</PrivateLayout>
