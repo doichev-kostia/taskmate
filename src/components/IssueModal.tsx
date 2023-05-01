@@ -169,7 +169,13 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 												boardId,
 												issueId,
 											});
-											onClose();
+											utils.boards.getBoard
+												.invalidate({
+													boardId,
+												})
+												.then(() => {
+													onClose();
+												});
 										}}
 									/>
 								</div>
