@@ -4,6 +4,9 @@
  */
 await import("./src/env.mjs");
 
+import removeImports from "next-remove-imports";
+
+
 /** @type {import("next").NextConfig} */
 const config = {
 	reactStrictMode: true,
@@ -31,4 +34,4 @@ const config = {
 //   defaultLocale: "en",
 // },
 };
-export default config;
+export default removeImports()(config);
