@@ -49,6 +49,7 @@ export const issuesRouter = createTRPCRouter({
 					title: input.title,
 					description: input.description,
 					boardId: input.boardId,
+					status: input.status,
 					creatorId: member.id,
 				},
 			});
