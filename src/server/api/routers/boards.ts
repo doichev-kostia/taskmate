@@ -11,7 +11,10 @@ import {
 	BoardDetailedRepresentationValidator,
 	BoardRepresentationValidator,
 } from "~/contracts/board.representation.validator";
-import { MemberRepresentationValidator } from "~/contracts/member.representation.validator";
+import {
+	MemberDetailedRepresentationValidator,
+	MemberRepresentationValidator,
+} from "~/contracts/member.representation.validator";
 import { InviteRepresentationValidator } from "~/contracts/invite.representation.validator";
 
 export const boardsRouter = createTRPCRouter({
@@ -175,6 +178,7 @@ export const boardsRouter = createTRPCRouter({
 					const user = await clerk.users.getUser(member.userId);
 					return {
 						...member,
+						userId: member.userId,
 						profileImageUrl: user.profileImageUrl,
 						firstName: user.firstName,
 						lastName: user.lastName,
@@ -183,6 +187,39 @@ export const boardsRouter = createTRPCRouter({
 			);
 
 			return board;
+		}),
+	getMembers: privateProcedure
+		.input(z.string())
+		.output(z.array(MemberDetailedRepresentationValidator))
+		.use(async function getMembersRequirements({ ctx, input, next }) {
+			await hasAccessToBoardRequirement({
+				userId: ctx.auth.userId,
+				boardId: input,
+			});
+
+			return next();
+		})
+		.query(async function getMembers({ ctx, input }) {
+			const members = await ctx.prisma.member.findMany({
+				where: {
+					boardId: input,
+				},
+			});
+
+			const populatedMembers = await Promise.all(
+				members.map(async (member) => {
+					const user = await clerk.users.getUser(member.userId);
+					return {
+						...member,
+						userId: member.userId,
+						profileImageUrl: user.profileImageUrl,
+						firstName: user.firstName,
+						lastName: user.lastName,
+					};
+				})
+			);
+
+			return populatedMembers;
 		}),
 	removeBoard: privateProcedure
 		.input(z.string())

@@ -9,7 +9,12 @@ export const MemberRepresentationValidator = z.object({
 });
 
 export const MemberDetailedRepresentationValidator = MemberRepresentationValidator.extend({
+	userId: z.string(),
 	firstName: z.string().nullish(),
 	lastName: z.string().nullish(),
 	profileImageUrl: z.string().url().nullish(),
 });
+
+export type MemberRepresentation = z.infer<typeof MemberRepresentationValidator>;
+
+export type MemberDetailedRepresentation = z.infer<typeof MemberDetailedRepresentationValidator>;

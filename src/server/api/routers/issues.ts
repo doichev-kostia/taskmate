@@ -206,10 +206,23 @@ export const issuesRouter = createTRPCRouter({
 		})
 		.output(CommentRepresentationValidator)
 		.mutation(async function addComment({ ctx, input }) {
+			const member = await ctx.prisma.member.findFirst({
+				where: {
+					userId: ctx.auth.userId,
+				},
+			});
+
+			if (!member) {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Member not found",
+				});
+			}
+
 			const comment = await ctx.prisma.comment.create({
 				data: {
 					issueId: input.issueId,
-					creatorId: ctx.auth.userId,
+					creatorId: member.id,
 					content: input.content,
 				},
 			});

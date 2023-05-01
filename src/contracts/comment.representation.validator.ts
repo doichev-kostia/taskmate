@@ -7,3 +7,5 @@ export const CommentRepresentationValidator = z.object({
 	issueId: z.string().uuid(),
 	creatorId: z.string().uuid(),
 });
+
+export type CommentRepresentation = z.infer<typeof CommentRepresentationValidator>;

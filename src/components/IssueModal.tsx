@@ -11,6 +11,8 @@ import { type z } from "zod";
 import { Editor } from "~/components/Editor";
 import { sanitize } from "~/utils/sanilize";
 import { DeleteIcon } from "@chakra-ui/icons";
+import { type MemberDetailedRepresentation } from "~/contracts/member.representation.validator";
+import { IssueComments } from "~/components/IssueComments";
 
 type Props = {
 	isOpen: boolean;
@@ -37,6 +39,13 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 			enabled: Boolean(isOpen && issueId && boardId),
 		}
 	);
+	const { data: members } = api.boards.getMembers.useQuery(boardId);
+
+	const memberMap = new Map<string, MemberDetailedRepresentation>();
+
+	members?.forEach((member) => {
+		memberMap.set(member.id, member);
+	});
 
 	const { mutateAsync: updateIssue, isLoading: isUpdatingIssue } = api.issues.update.useMutation();
 	const { mutate: deleteIssue } = api.issues.deleteIssue.useMutation();
@@ -169,7 +178,7 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 												boardId,
 												issueId,
 											});
-											utils.boards.getBoard
+											void utils.boards.getBoard
 												.invalidate({
 													boardId,
 												})
@@ -179,10 +188,8 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 										}}
 									/>
 								</div>
-								<div>
-									<h4 className="mb-1">Comments</h4>
-								</div>
 							</div>
+							<IssueComments comments={issue?.comments ?? []} memberMap={memberMap} issueId={issueId} />
 						</ModalBody>
 					</>
 				)}
