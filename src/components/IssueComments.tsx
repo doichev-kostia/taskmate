@@ -62,7 +62,7 @@ export function IssueComments({ issueId, comments, memberMap }: IssueCommentProp
 	return (
 		<div>
 			<h4 className="mb-1">Comments</h4>
-			<ul className="mb-4 flex flex-col gap-y-5">
+			<ul className="mb-6 flex flex-col gap-y-5">
 				{comments.map((comment) => {
 					const member = memberMap.get(comment.creatorId);
 					const isOwner = member?.userId === user?.id;

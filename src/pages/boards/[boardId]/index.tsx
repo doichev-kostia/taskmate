@@ -103,7 +103,7 @@ function BoardPage() {
 				)}
 
 				<section className="flex h-px flex-1 flex-col">
-					<div className="flex h-full flex-1">
+					<div className="flex h-full flex-1 overflow-x-auto">
 						{isLoading ? (
 							<div>Loading...</div>
 						) : isError ? (
