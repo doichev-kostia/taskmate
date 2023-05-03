@@ -1,5 +1,15 @@
 import { Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
-import { Button, FormControl, FormLabel, IconButton, Input, ModalCloseButton, Select, Spinner } from "@chakra-ui/react";
+import {
+	Avatar,
+	Button,
+	FormControl,
+	FormLabel,
+	IconButton,
+	Input,
+	ModalCloseButton,
+	Select,
+	Spinner,
+} from "@chakra-ui/react";
 import { api } from "~/utils/api";
 import { isBrowser } from "~/utils/isBrowser";
 import React from "react";
@@ -13,6 +23,8 @@ import { sanitize } from "~/utils/sanilize";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { type MemberDetailedRepresentation } from "~/contracts/member.representation.validator";
 import { IssueComments } from "~/components/IssueComments";
+import { getFullName } from "~/utils/getFullName";
+import { cx } from "~/styles/cx";
 
 type Props = {
 	isOpen: boolean;
@@ -49,6 +61,8 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 
 	const { mutateAsync: updateIssue, isLoading: isUpdatingIssue } = api.issues.update.useMutation();
 	const { mutate: deleteIssue } = api.issues.deleteIssue.useMutation();
+	const { mutateAsync: addAssignee, isLoading: isAddingAssignee } = api.issues.addAssignee.useMutation();
+	const { mutateAsync: deleteAssignee, isLoading: isAssigneeDeleting } = api.issues.deleteAssignee.useMutation();
 
 	const utils = api.useContext();
 
@@ -87,6 +101,10 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 		});
 		onClose();
 		reset();
+	});
+
+	const unassignedMembers = members?.filter((member) => {
+		return !issue?.assignees.some((assignee) => assignee.memberId === member.id);
 	});
 
 	return (
@@ -165,8 +183,70 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 								</FormControl>
 								<FormControl isRequired className="mb-4">
 									<FormLabel>Assignees </FormLabel>
-									<Select onChange={({ target }) => {}} disabled={isUpdatingIssue}></Select>
+									<Select
+										defaultValue="default"
+										onChange={async ({ target }) => {
+											await addAssignee({
+												issueId,
+												memberId: target.value,
+											});
+											await utils.issues.getIssue.invalidate({
+												boardId,
+												issueId,
+											});
+											target.value = "default";
+										}}
+										disabled={
+											isUpdatingIssue || isAssigneeDeleting || isIssueLoading || isAddingAssignee
+										}
+									>
+										<option value="default" disabled>
+											Select assignee
+										</option>
+										{unassignedMembers?.map((member) => (
+											<option key={member.id} value={member.id}>
+												{getFullName(member?.firstName, member?.lastName)}
+											</option>
+										))}
+									</Select>
 								</FormControl>
+								<ul className="mb-4">
+									{issue?.assignees.map(({ id, memberId }) => {
+										const member = memberMap.get(memberId);
+										return (
+											<li key={memberId} className="flex justify-between gap-x-3">
+												<div className="flex gap-x-3">
+													<Avatar
+														size="xs"
+														name={getFullName(member?.firstName, member?.lastName)}
+														src={member?.profileImageUrl ?? undefined}
+														title={getFullName(member?.firstName, member?.lastName)}
+													/>
+													<span className="block text-slate-300">
+														{getFullName(member?.firstName, member?.lastName)}
+													</span>
+												</div>
+												<IconButton
+													aria-label="remove member"
+													className={cx("text-red-600")}
+													icon={<DeleteIcon />}
+													isDisabled={isAssigneeDeleting}
+													onClick={async () => {
+														await deleteAssignee({
+															issueId: issueId,
+															assigneeId: id,
+														});
+
+														await utils.issues.getIssue.invalidate({
+															boardId,
+															issueId,
+														});
+													}}
+												/>
+											</li>
+										);
+									})}
+								</ul>
 								<div>
 									<h4 className="mb-1">Actions</h4>
 									<IconButton
