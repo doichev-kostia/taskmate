@@ -271,7 +271,12 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 									/>
 								</div>
 							</div>
-							<IssueComments comments={issue?.comments ?? []} memberMap={memberMap} issueId={issueId} />
+							<IssueComments
+								comments={issue?.comments ?? []}
+								memberMap={memberMap}
+								issueId={issueId}
+								boardId={boardId}
+							/>
 						</ModalBody>
 					</>
 				)}

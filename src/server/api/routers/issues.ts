@@ -209,6 +209,7 @@ export const issuesRouter = createTRPCRouter({
 			const member = await ctx.prisma.member.findFirst({
 				where: {
 					userId: ctx.auth.userId,
+					boardId: input.boardId,
 				},
 			});
 

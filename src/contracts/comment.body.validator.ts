@@ -3,6 +3,7 @@ import { z } from "zod";
 export const CommentBodyValidator = z.object({
 	content: z.string().min(1),
 	issueId: z.string().uuid(),
+	boardId: z.string().uuid(),
 });
 
 export const EditCommentBodyValidator = z.object({

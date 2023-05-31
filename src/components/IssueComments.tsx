@@ -16,6 +16,7 @@ type IssueCommentProps = {
 	comments: CommentRepresentation[];
 	memberMap: Map<string, MemberDetailedRepresentation>;
 	issueId: string;
+	boardId: string;
 };
 
 const CommentSchema = CommentBodyValidator.pick({
@@ -24,7 +25,7 @@ const CommentSchema = CommentBodyValidator.pick({
 
 type Values = z.infer<typeof CommentSchema>;
 
-export function IssueComments({ issueId, comments, memberMap }: IssueCommentProps) {
+export function IssueComments({ issueId, boardId, comments, memberMap }: IssueCommentProps) {
 	const utils = api.useContext();
 	const { mutateAsync: addComment, isLoading: isCommentCreating } = api.issues.addComment.useMutation();
 	const { mutateAsync: deleteComment, isLoading: isCommentDeleting } = api.issues.deleteComment.useMutation();
@@ -42,6 +43,7 @@ export function IssueComments({ issueId, comments, memberMap }: IssueCommentProp
 	const onSubmit = handleSubmit(async function commentSubmitHandler(values) {
 		await addComment({
 			issueId,
+			boardId,
 			content: values.content,
 		});
 		await utils.issues.getIssue.invalidate({ issueId });
