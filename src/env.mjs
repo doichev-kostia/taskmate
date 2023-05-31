@@ -17,6 +17,7 @@ const server = z.object({
  */
 const client = z.object({
 	NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+	NEXT_PUBLIC_API_URL: z.string().url(),
 });
 
 /**
@@ -30,7 +31,8 @@ const processEnv = {
 	DATABASE_URL: process.env.DATABASE_URL,
 	DIRECT_URL: process.env.DIRECT_URL,
 	CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-	NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+	NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+	NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
 };
 
 // Don't touch the part below
