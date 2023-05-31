@@ -1,13 +1,12 @@
-import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/router";
+import CookieService from "~/cookie-service";
 
 export const useSignOut = () => {
-	const auth = useAuth();
 	const router = useRouter();
 
 	async function signOut() {
 		await router.push("/sign-in");
-		await auth.signOut();
+		CookieService.remove("access_token", { path: "/" });
 	}
 
 	return signOut;
