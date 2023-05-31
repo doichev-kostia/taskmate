@@ -11,6 +11,7 @@ import CookieService from "~/cookie-service";
 import { z } from "zod";
 import { ACCESS_TOKEN_KEY } from "~/utils/constants";
 import { logout } from "~/utils/logout";
+import { env } from "~/env.mjs";
 
 const isLoginUrl = (url: string): boolean => /\/auth\/oauth/.test(url);
 
@@ -147,5 +148,5 @@ class HttpClient {
 }
 
 export const httpClient = new HttpClient({
-	baseURL: process.env.NEXT_PUBLIC_API_URL,
+	baseURL: env.NEXT_PUBLIC_API_URL,
 });
