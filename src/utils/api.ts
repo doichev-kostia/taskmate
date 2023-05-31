@@ -51,7 +51,13 @@ export const api = createTRPCNext<AppRouter>({
 						debugger;
 						if (!(error instanceof TRPCClientError)) return;
 
-						if (error?.data?.code === "INTERNAL_SERVER_ERROR" && error.message.match(/prisma/)) {
+						if (
+							error?.data?.code === "INTERNAL_SERVER_ERROR" &&
+							error.message.match(/prisma/) &&
+							(error.message.match(/database/) ||
+								error.message.match(/connection/) ||
+								error.message.match(/disconnected/))
+						) {
 							toast.error(
 								"The database was scaled down because of the inactivity. Please contact the site owner at doichev.kostia@gmail.com to wake it up."
 							);
