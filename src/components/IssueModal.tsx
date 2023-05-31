@@ -51,7 +51,9 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 			enabled: Boolean(isOpen && issueId && boardId),
 		}
 	);
-	const { data: members } = api.boards.getMembers.useQuery(boardId);
+	const { data: members } = api.boards.getMembers.useQuery(boardId, {
+		enabled: Boolean(isOpen && boardId),
+	});
 
 	const memberMap = new Map<string, MemberDetailedRepresentation>();
 
