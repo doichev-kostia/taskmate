@@ -8,7 +8,7 @@ import Link from "next/link";
 import { AddIcon, EditIcon } from "@chakra-ui/icons";
 import { Avatar, AvatarGroup, Button, IconButton } from "@chakra-ui/react";
 import { useUser } from "@clerk/nextjs";
-import { BoardColumn } from "~/components/BoardColumn";
+import { BoardColumn, BoardColumnSkeleton } from "~/components/BoardColumn";
 import { createParamsParser } from "~/utils/createParamsParser";
 import { getFullName } from "~/utils/getFullName";
 import { AttachMemberModal } from "~/components/AttachMemberModal";
@@ -104,10 +104,13 @@ function BoardPage() {
 
 				<section className="flex h-px flex-1 flex-col">
 					<div className="flex h-full flex-1 overflow-x-auto">
-						{isLoading ? (
-							<div>Loading...</div>
-						) : isError ? (
-							<div>Something went wrong. Please try again later.</div>
+						{isLoading || isError ? (
+							<>
+								<BoardColumnSkeleton className="flex-1" />
+								<BoardColumnSkeleton className="flex-1" />
+								<BoardColumnSkeleton className="flex-1" />
+								<BoardColumnSkeleton className="flex-1" />
+							</>
 						) : (
 							<>
 								<BoardColumn
