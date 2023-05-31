@@ -10,13 +10,12 @@ import {
 	Select,
 	Spinner,
 } from "@chakra-ui/react";
-import { api } from "~/utils/api";
 import { isBrowser } from "~/utils/isBrowser";
 import React from "react";
 import { Status } from "@prisma/client";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IssueBodyValidator } from "~/contracts/issue.body.validator";
+import { type IssueBody, IssueBodyValidator } from "~/contracts/issue.body.validator";
 import { type z } from "zod";
 import { Editor } from "~/components/Editor";
 import { sanitize } from "~/utils/sanilize";
@@ -25,14 +24,18 @@ import { type MemberDetailedRepresentation } from "~/contracts/member.representa
 import { IssueComments } from "~/components/IssueComments";
 import { getFullName } from "~/utils/getFullName";
 import { cx } from "~/styles/cx";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { type IssueDetailedRepresentation } from "~/contracts/issue.representation.validator";
+import { type AssigneeBody } from "~/contracts/assignee.body.validator";
 
 type Props = {
 	isOpen: boolean;
-	boardId: string;
+	boardId: number;
 	onClose: () => void;
 };
 
-type Values = Partial<Pick<z.infer<typeof IssueBodyValidator>, "title" | "description">>;
+type Values = Pick<z.infer<typeof IssueBodyValidator>, "title" | "description">;
 
 export function IssueModal({ isOpen, onClose, boardId }: Props) {
 	const searchParams = isBrowser() ? new URLSearchParams(window.location.search) : new URLSearchParams();
@@ -42,69 +45,85 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 		data: issue,
 		isInitialLoading: isIssueLoading,
 		isError: isIssueError,
-	} = api.issues.getIssue.useQuery(
-		{
-			boardId,
-			issueId,
-		},
-		{
-			enabled: Boolean(isOpen && issueId && boardId),
-		}
-	);
-	const { data: members } = api.boards.getMembers.useQuery(boardId);
+	} = useQuery({
+		queryKey: ["board", boardId, "issues", issueId],
+		queryFn: () => httpClient.get<IssueDetailedRepresentation>(`issues/${issueId}`),
+		enabled: Boolean(issueId && isOpen),
+	});
 
-	const memberMap = new Map<string, MemberDetailedRepresentation>();
+	const { data: members } = useQuery({
+		queryKey: ["board", boardId, "members"],
+		queryFn: () => httpClient.get<MemberDetailedRepresentation[]>(`boards/${boardId}/members`),
+		enabled: Boolean(boardId),
+	});
+
+	const memberMap = new Map<number, MemberDetailedRepresentation>();
 
 	members?.forEach((member) => {
 		memberMap.set(member.id, member);
 	});
 
-	const { mutateAsync: updateIssue, isLoading: isUpdatingIssue } = api.issues.update.useMutation();
-	const { mutate: deleteIssue } = api.issues.deleteIssue.useMutation();
-	const { mutateAsync: addAssignee, isLoading: isAddingAssignee } = api.issues.addAssignee.useMutation();
-	const { mutateAsync: deleteAssignee, isLoading: isAssigneeDeleting } = api.issues.deleteAssignee.useMutation();
+	const { mutateAsync: updateIssueStatus, isLoading: isUpdatingIssueStatus } = useMutation({
+		mutationFn: ({ issueId, body }: { issueId: number; body: Pick<IssueBody, "status"> }) =>
+			httpClient.patch(`/issues/${issueId}/status`, body),
+	});
 
-	const utils = api.useContext();
+	const { mutateAsync: updateIssue, isLoading: isUpdatingIssue } = useMutation({
+		mutationFn: ({ issueId, body }: { issueId: number; body: IssueBody }) =>
+			httpClient.put(`/issues/${issueId}`, body),
+	});
+
+	const { mutate: deleteIssue } = useMutation({
+		mutationFn: ({ issueId }: { issueId: number }) => httpClient.delete(`/issues/${issueId}`),
+	});
+
+	const { mutateAsync: addAssignee, isLoading: isAddingAssignee } = useMutation({
+		mutationFn: ({ issueId, body }: { issueId: number; body: AssigneeBody }) =>
+			httpClient.post(`/issues/${issueId}/assignees`, body),
+	});
+
+	const { mutateAsync: deleteAssignee, isLoading: isAssigneeDeleting } = useMutation({
+		mutationFn: ({ assigneeId }: { assigneeId: number }) => httpClient.delete(`/issues/assignees/${assigneeId}`),
+	});
+
+	const queryClient = useQueryClient();
 
 	const { register, control, handleSubmit, reset } = useForm<Values>({
 		resolver: zodResolver(IssueBodyValidator.partial().pick({ title: true, description: true })),
 		values: {
-			title: issue?.title,
+			title: issue?.title ?? "",
 			description: sanitize(issue?.description ?? ""),
 		},
 	});
 
-	const updateIssueStatus = async (status: Status) => {
-		await updateIssue({
-			boardId,
-			issueId,
-			issue: {
-				status,
+	const editIssueStatus = async (status: Status) => {
+		await updateIssueStatus({
+			issueId: Number(issueId),
+			body: {
+				status: status,
 			},
 		});
-		await utils.boards.getBoard.invalidate({
-			boardId,
-		});
+
+		await queryClient.invalidateQueries(["boards", boardId]);
 	};
 
 	const onSubmit = handleSubmit(async function submitIssue(data) {
 		await updateIssue({
-			boardId,
-			issueId,
-			issue: {
+			issueId: Number(issueId),
+			body: {
 				title: data.title,
 				description: sanitize(data.description ?? ""),
+				status: "BACKLOG",
 			},
 		});
-		await utils.boards.getBoard.invalidate({
-			boardId,
-		});
+
+		await queryClient.invalidateQueries(["boards", boardId]);
 		onClose();
 		reset();
 	});
 
 	const unassignedMembers = members?.filter((member) => {
-		return !issue?.assignees.some((assignee) => assignee.memberId === member.id);
+		return !issue?.assignees.some((assignee) => assignee.member.id === member.id);
 	});
 
 	return (
@@ -170,9 +189,9 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 									<Select
 										defaultValue={issue?.status}
 										onChange={({ target }) => {
-											updateIssueStatus(target.value as Status);
+											void editIssueStatus(target.value as Status);
 										}}
-										disabled={isUpdatingIssue}
+										disabled={isUpdatingIssue || isUpdatingIssueStatus}
 									>
 										<option value={Status.BACKLOG}>Backlog</option>
 										<option value={Status.TO_DO}>Todo</option>
@@ -186,14 +205,15 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 									<Select
 										defaultValue="default"
 										onChange={async ({ target }) => {
+											debugger;
 											await addAssignee({
-												issueId,
-												memberId: target.value,
+												issueId: Number(issueId),
+												body: {
+													memberId: Number(target.value),
+												},
 											});
-											await utils.issues.getIssue.invalidate({
-												boardId,
-												issueId,
-											});
+
+											await queryClient.invalidateQueries(["board", boardId, "issues", issueId]);
 											target.value = "default";
 										}}
 										disabled={
@@ -205,25 +225,31 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 										</option>
 										{unassignedMembers?.map((member) => (
 											<option key={member.id} value={member.id}>
-												{getFullName(member?.firstName, member?.lastName)}
+												{getFullName(member?.user.firstName, member?.user.lastName)}
 											</option>
 										))}
 									</Select>
 								</FormControl>
 								<ul className="mb-4">
-									{issue?.assignees.map(({ id, memberId }) => {
+									{issue?.assignees.map(({ id, member: { id: memberId } }) => {
 										const member = memberMap.get(memberId);
 										return (
 											<li key={memberId} className="flex justify-between gap-x-3">
 												<div className="flex gap-x-3">
 													<Avatar
 														size="xs"
-														name={getFullName(member?.firstName, member?.lastName)}
-														src={member?.profileImageUrl ?? undefined}
-														title={getFullName(member?.firstName, member?.lastName)}
+														name={getFullName(
+															member?.user.firstName,
+															member?.user.lastName
+														)}
+														src={member?.user.profileImageUrl ?? undefined}
+														title={getFullName(
+															member?.user.firstName,
+															member?.user.lastName
+														)}
 													/>
 													<span className="block text-slate-300">
-														{getFullName(member?.firstName, member?.lastName)}
+														{getFullName(member?.user?.firstName, member?.user?.lastName)}
 													</span>
 												</div>
 												<IconButton
@@ -233,14 +259,15 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 													isDisabled={isAssigneeDeleting}
 													onClick={async () => {
 														await deleteAssignee({
-															issueId: issueId,
 															assigneeId: id,
 														});
 
-														await utils.issues.getIssue.invalidate({
+														await queryClient.invalidateQueries([
+															"board",
 															boardId,
+															"issues",
 															issueId,
-														});
+														]);
 													}}
 												/>
 											</li>
@@ -255,21 +282,21 @@ export function IssueModal({ isOpen, onClose, boardId }: Props) {
 										icon={<DeleteIcon />}
 										onClick={() => {
 											deleteIssue({
-												boardId,
-												issueId,
+												issueId: Number(issueId),
 											});
-											void utils.boards.getBoard
-												.invalidate({
-													boardId,
-												})
-												.then(() => {
-													onClose();
-												});
+											void queryClient.invalidateQueries(["board", boardId]).then(() => {
+												onClose();
+											});
 										}}
 									/>
 								</div>
 							</div>
-							<IssueComments comments={issue?.comments ?? []} memberMap={memberMap} issueId={issueId} />
+							<IssueComments
+								comments={issue?.comments ?? []}
+								memberMap={memberMap}
+								issueId={issueId}
+								boardId={boardId}
+							/>
 						</ModalBody>
 					</>
 				)}

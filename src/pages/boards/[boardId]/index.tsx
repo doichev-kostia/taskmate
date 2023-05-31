@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import { PrivateLayout } from "~/layouts/PrivateLayout";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { api } from "~/utils/api";
 import { z } from "zod";
 import Link from "next/link";
 import { AddIcon, EditIcon } from "@chakra-ui/icons";
 import { Avatar, AvatarGroup, Button, IconButton } from "@chakra-ui/react";
-import { useUser } from "@clerk/nextjs";
 import { BoardColumn } from "~/components/BoardColumn";
 import { createParamsParser } from "~/utils/createParamsParser";
 import { getFullName } from "~/utils/getFullName";
@@ -16,6 +14,11 @@ import CreateIssueModal from "~/components/CreateIssueModal";
 import type { Status } from "@prisma/client";
 import { type IssueRepresentation } from "~/contracts/issue.representation.validator";
 import { IssueModal } from "~/components/IssueModal";
+import { useQuery } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { type BoardDetailedRepresentation } from "~/contracts/board.representation.validator";
+import { useTokenData } from "~/hooks/useTokenData";
+import { type UserRepresentation } from "~/contracts/user.representation.validator";
 
 function BoardPage() {
 	const router = useRouter();
@@ -23,23 +26,27 @@ function BoardPage() {
 	const [isIssueCreationModalOpen, setIsIssueCreationModalOpen] = useState(false);
 	const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-	const { boardId = "" } = createParamsParser(
+	const { boardId } = createParamsParser(
 		{
-			boardId: z.string().uuid().optional(),
+			boardId: z.coerce.number().optional(),
 		},
 		router.query
 	);
 
-	const { user } = useUser();
+	const { userId } = useTokenData();
 
-	const { data, isLoading, isError } = api.boards.getBoard.useQuery(
-		{ boardId },
-		{
-			enabled: !!boardId,
-		}
-	);
+	const { data: user } = useQuery({
+		queryKey: ["user", userId],
+		queryFn: () => httpClient.get<UserRepresentation>(`/users/${userId}`),
+	});
 
-	const members = data?.members ? data.members.filter((member) => member.userId !== user?.id) : [];
+	const { data, isLoading, isError } = useQuery({
+		queryKey: ["boards", boardId],
+		queryFn: () => httpClient.get<BoardDetailedRepresentation>(`/boards/${boardId as number}`),
+		enabled: !!boardId,
+	});
+
+	const members = data?.members ? data.members.filter((member) => member.user.id !== user?.id) : [];
 
 	const issues = new Map<Status, IssueRepresentation[]>();
 
@@ -76,13 +83,15 @@ function BoardPage() {
 						<div className="flex items-center justify-between">
 							<div className="flex gap-x-5">
 								<AvatarGroup size="sm" max={3}>
-									<Avatar name={"Me"} src={user?.profileImageUrl} title={"Me"} />
+									<Avatar name={"Me"} src={user?.profileImageUrl ?? undefined} title={"Me"} />
 									{members.map((member) => (
 										<Avatar
 											key={member.id}
-											name={getFullName(member.firstName, member.lastName) ?? undefined}
-											src={member?.profileImageUrl ?? undefined}
-											title={getFullName(member.firstName, member.lastName) ?? undefined}
+											name={getFullName(member.user.firstName, member.user.lastName) ?? undefined}
+											src={member.user.profileImageUrl ?? undefined}
+											title={
+												getFullName(member.user.firstName, member.user.lastName) ?? undefined
+											}
 										/>
 									))}
 								</AvatarGroup>
@@ -143,18 +152,18 @@ function BoardPage() {
 					</div>
 				</section>
 				<AttachMemberModal
-					boardId={boardId}
+					boardId={boardId as number}
 					isOpen={isAddMemberModalOpen}
 					onClose={() => setIsAddMemberModalOpen(false)}
 				/>
 				<CreateIssueModal
-					boardId={boardId}
+					boardId={boardId as number}
 					isOpen={isIssueCreationModalOpen}
 					onClose={() => setIsIssueCreationModalOpen(false)}
 				/>
 				<IssueModal
 					isOpen={isIssueModalOpen}
-					boardId={boardId}
+					boardId={boardId as number}
 					onClose={() => {
 						setIsIssueModalOpen(false);
 						const url = new URL(window.location.href);

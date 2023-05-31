@@ -1,13 +1,21 @@
 import React from "react";
 import Link from "next/link";
 import { HeaderDropdown } from "~/components/HeaderDropdown";
-import { useUser } from "@clerk/nextjs";
 import { getFullName } from "~/utils/getFullName";
+import { useQuery } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { type UserRepresentation } from "~/contracts/user.representation.validator";
+import { useTokenData } from "~/hooks/useTokenData";
 
 export const Header = () => {
-	const { user } = useUser();
+	const { userId } = useTokenData();
 
-	const fullName = user?.fullName ?? getFullName(user?.firstName, user?.lastName);
+	const { data: user } = useQuery({
+		queryKey: ["user", userId],
+		queryFn: () => httpClient.get<UserRepresentation>(`/users/${userId}`),
+	});
+
+	const fullName = getFullName(user?.firstName, user?.lastName);
 
 	return (
 		<header className="border-b border-solid border-slate-600 ">

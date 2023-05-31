@@ -2,5 +2,7 @@ import { z } from "zod";
 import { MemberRole } from "@prisma/client";
 
 export const InviteBodyValidator = z.object({
-	role: z.enum(Object.values(MemberRole)),
+	memberRole: z.enum(Object.values(MemberRole)),
 });
+
+export type InviteBody = z.infer<typeof InviteBodyValidator>;

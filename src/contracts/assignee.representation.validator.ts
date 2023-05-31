@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 export const AssigneeRepresentationValidator = z.object({
-	id: z.string().uuid(),
-	issueId: z.string().uuid(),
-	memberId: z.string().uuid(),
+	id: z.number(),
+	issueId: z.number(),
+	member: z.object({
+		id: z.number(),
+	}),
 });
+
+export type AssigneeRepresentation = z.infer<typeof AssigneeRepresentationValidator>;

@@ -20,7 +20,7 @@ export const BoardColumn = ({ id, name, className, issues, openModal }: BoardCol
 				{issues.map((issue) => (
 					<Issue
 						key={issue.id}
-						id={issue.id}
+						id={issue.id.toString()}
 						title={issue.title}
 						description={issue.description}
 						openModal={openModal}

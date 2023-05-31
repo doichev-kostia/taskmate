@@ -4,12 +4,14 @@ import type { MemberRole } from "@prisma/client";
 import React, { useState } from "react";
 import { createInviteLink } from "~/utils/createInviteLink";
 import { copyToClipboard } from "~/utils/copyToClipboard";
-import { api } from "~/utils/api";
+import { useMutation } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { type InviteBody } from "~/contracts/invite.body.validator";
 
 type AddMemberModalProps = {
 	isOpen: boolean;
 	onClose: () => void;
-	boardId: string;
+	boardId: number;
 };
 
 export function AttachMemberModal({ isOpen, onClose, boardId }: AddMemberModalProps) {
@@ -18,13 +20,16 @@ export function AttachMemberModal({ isOpen, onClose, boardId }: AddMemberModalPr
 		isLoading: isAttaching,
 		isSuccess: isAttached,
 		data: invite,
-	} = api.boards.attachMember.useMutation();
+	} = useMutation({
+		mutationFn: ({ boardId, body }: { boardId: number; body: InviteBody }) =>
+			httpClient.post<{ id: string }>(`/invites/boards/${boardId}`, body),
+	});
 
 	const addMember = async (role: MemberRole) => {
 		await attachMember({
 			boardId,
-			invite: {
-				role,
+			body: {
+				memberRole: role,
 			},
 		});
 	};

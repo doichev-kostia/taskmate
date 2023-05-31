@@ -4,14 +4,21 @@ import Head from "next/head";
 import { Button, SimpleGrid } from "@chakra-ui/react";
 import { Board, BoardSkeleton } from "~/components/Board";
 import Link from "next/link";
-import { api } from "~/utils/api";
+import { useQuery } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { milliseconds } from "~/utils/constants";
+import { type BoardRepresentation } from "~/contracts/board.representation.validator";
 
 const DashboardPage = () => {
 	const {
 		data: boards,
 		isLoading,
 		isError,
-	} = api.boards.getBoards.useQuery();
+	} = useQuery({
+		queryKey: ["boards"],
+		queryFn: () => httpClient.get<BoardRepresentation[]>("/boards"),
+		staleTime: 2 * milliseconds.second,
+	});
 
 	return (
 		<PrivateLayout>
@@ -26,10 +33,7 @@ const DashboardPage = () => {
 					</Button>
 				</div>
 				<section>
-					<SimpleGrid
-						minChildWidth="250px"
-						className="justify-items-center gap-x-3 gap-y-4"
-					>
+					<SimpleGrid minChildWidth="250px" className="justify-items-center gap-x-3 gap-y-4">
 						{isLoading ? (
 							<>
 								<BoardSkeleton />
@@ -37,9 +41,7 @@ const DashboardPage = () => {
 								<BoardSkeleton />
 							</>
 						) : isError ? (
-							<div>
-								Something went wrong. Please try again later.
-							</div>
+							<div>Something went wrong. Please try again later.</div>
 						) : (
 							boards.map((board) => (
 								<Board

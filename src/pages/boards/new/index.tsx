@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import { PrivateLayout } from "~/layouts/PrivateLayout";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BoardBodyValidator } from "~/contracts/board.body.validator";
+import { type BoardBody, BoardBodyValidator } from "~/contracts/board.body.validator";
 import { Button, FormControl, FormLabel, Input } from "@chakra-ui/react";
 import { type z } from "zod";
-import { api } from "~/utils/api";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import { BOARD_IMAGES } from "~/utils/constants";
 import { cx } from "~/styles/cx";
+import { useMutation } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
 
 type Values = z.infer<typeof BoardBodyValidator>;
 
@@ -27,7 +28,9 @@ function CreateBoardPage() {
 
 	const router = useRouter();
 
-	const { mutateAsync: createBoard } = api.boards.createBoard.useMutation();
+	const { mutateAsync: createBoard } = useMutation({
+		mutationFn: (body: BoardBody) => httpClient.post<void>("/boards", body),
+	});
 
 	const onSubmit = handleSubmit(async (data) => {
 		try {

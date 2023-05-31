@@ -5,14 +5,14 @@ import { MemberRepresentationValidator } from "~/contracts/member.representation
 import { CommentRepresentationValidator } from "~/contracts/comment.representation.validator";
 
 export const IssueRepresentationValidator = z.object({
-	id: z.string().uuid(),
+	id: z.number(),
 	createdAt: z.date(),
 	updatedAt: z.date(),
 	title: z.string(),
 	description: z.string(),
 	status: z.enum(Object.values(Status)),
-	creatorId: z.string().uuid().nullish(),
-	boardId: z.string().uuid(),
+	creatorId: z.number().nullish(),
+	boardId: z.number(),
 });
 
 export type IssueRepresentation = z.infer<typeof IssueRepresentationValidator>;
@@ -22,3 +22,5 @@ export const IssueDetailedRepresentationValidator = IssueRepresentationValidator
 	creator: MemberRepresentationValidator.nullish(),
 	comments: z.array(CommentRepresentationValidator),
 });
+
+export type IssueDetailedRepresentation = z.infer<typeof IssueDetailedRepresentationValidator>;

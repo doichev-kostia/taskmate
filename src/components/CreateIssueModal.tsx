@@ -1,18 +1,19 @@
 import React from "react";
-import { api } from "~/utils/api";
 import { Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay } from "@chakra-ui/modal";
 import { Button, FormControl, FormLabel, Input, ModalCloseButton, Select } from "@chakra-ui/react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IssueBodyValidator } from "~/contracts/issue.body.validator";
+import { type IssueBody, IssueBodyValidator } from "~/contracts/issue.body.validator";
 import { type z } from "zod";
 
 import { Status } from "@prisma/client";
 import { Editor } from "~/components/Editor";
 import { sanitize } from "~/utils/sanilize";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
 
 export type CreateIssueModalProps = {
-	boardId: string;
+	boardId: number;
 	isOpen: boolean;
 	onClose: () => void;
 };
@@ -20,11 +21,14 @@ export type CreateIssueModalProps = {
 type Values = Omit<z.infer<typeof IssueBodyValidator>, "boardId">;
 
 export function CreateIssueModal({ boardId, isOpen, onClose }: CreateIssueModalProps) {
-	const { mutateAsync: createIssue, isLoading } = api.issues.create.useMutation();
-	const utils = api.useContext();
+	const { mutateAsync: createIssue, isLoading } = useMutation({
+		mutationFn: ({ boardId, body }: { boardId: number; body: IssueBody }) =>
+			httpClient.post(`/issues/boards/${boardId}`, body),
+	});
+	const queryClient = useQueryClient();
 
 	const { register, control, handleSubmit, reset } = useForm<Values>({
-		resolver: zodResolver(IssueBodyValidator.omit({ boardId: true })),
+		resolver: zodResolver(IssueBodyValidator),
 		defaultValues: {
 			status: Status.BACKLOG,
 			description: "",
@@ -34,13 +38,13 @@ export function CreateIssueModal({ boardId, isOpen, onClose }: CreateIssueModalP
 	const onSubmit = handleSubmit(async function submitIssue(data) {
 		await createIssue({
 			boardId,
-			title: data.title,
-			description: sanitize(data.description),
-			status: data.status,
+			body: {
+				title: data.title,
+				description: sanitize(data.description),
+				status: data.status,
+			},
 		});
-		await utils.boards.getBoard.invalidate({
-			boardId,
-		});
+		await queryClient.invalidateQueries(["boards", boardId]);
 		onClose();
 		reset();
 	});

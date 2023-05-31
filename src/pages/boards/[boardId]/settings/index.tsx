@@ -2,54 +2,78 @@ import React, { useEffect, useState } from "react";
 import { PrivateLayout } from "~/layouts/PrivateLayout";
 import { useRouter } from "next/router";
 import { z } from "zod";
-import { useUser } from "@clerk/nextjs";
-import { api } from "~/utils/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BoardBodyValidator } from "~/contracts/board.body.validator";
+import { type BoardBody, BoardBodyValidator } from "~/contracts/board.body.validator";
 import { Avatar, Button, FormControl, FormLabel, IconButton, Input, Select } from "@chakra-ui/react";
 import { BOARD_IMAGES } from "~/utils/constants";
 import { cx } from "~/styles/cx";
 import { createParamsParser } from "~/utils/createParamsParser";
 import { DeleteIcon } from "@chakra-ui/icons";
 import { type MemberRole } from "@prisma/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { httpClient } from "~/http-client";
+import { type UserRepresentation } from "~/contracts/user.representation.validator";
+import { useTokenData } from "~/hooks/useTokenData";
+import { type BoardDetailedRepresentation } from "~/contracts/board.representation.validator";
+import { type MemberRepresentation } from "~/contracts/member.representation.validator";
+import { type UpdateMemberBody } from "~/contracts/update-member.body.validator";
+import { toast } from "react-toastify";
 
-type Values = Partial<z.infer<typeof BoardBodyValidator>>;
+type Values = z.infer<typeof BoardBodyValidator>;
 
 function BoardSettingsPage() {
 	const router = useRouter();
 
-	const { boardId = "" } = createParamsParser(
+	const { boardId } = createParamsParser(
 		{
-			boardId: z.string().uuid().optional(),
+			boardId: z.coerce.number().optional(),
 		},
 		router.query
 	);
 
-	const { user } = useUser();
+	const { userId } = useTokenData();
 
-	const { data: board, refetch } = api.boards.getBoard.useQuery(
-		{ boardId },
-		{
-			enabled: !!boardId,
-		}
-	);
+	const { data: user } = useQuery({
+		queryKey: ["user", userId],
+		queryFn: () => httpClient.get<UserRepresentation>(`/users/${userId}`),
+	});
 
-	const { data: member, isLoading: isMemberLoading } = api.members.getMember.useQuery(
-		{
-			userId: user?.id,
-			boardId,
+	const { data: board, refetch } = useQuery({
+		queryKey: ["boards", boardId],
+		queryFn: () => httpClient.get<BoardDetailedRepresentation>(`/boards/${boardId as number}`),
+		enabled: !!boardId,
+	});
+
+	const { data: member, isLoading: isMemberLoading } = useQuery({
+		queryKey: ["boards", boardId, "members"],
+		queryFn: () => {
+			return httpClient.get<MemberRepresentation>("/members", {
+				params: {
+					boardId: boardId as number,
+				},
+			});
 		},
-		{
-			enabled: !!user?.id,
-		}
-	);
+		enabled: !!boardId,
+	});
 
-	const { mutateAsync: updateBoard, isLoading: isUpdating } = api.boards.updateBoard.useMutation();
-	const { mutateAsync: updateMember } = api.boards.updateMember.useMutation();
+	const { mutateAsync: updateBoard, isLoading: isUpdating } = useMutation({
+		mutationFn: ({ id, body }: { id: number; body: BoardBody }) => httpClient.put<void>(`/boards/${id}`, body),
+	});
 
-	const { mutateAsync: removeBoard } = api.boards.removeBoard.useMutation();
-	const { mutateAsync: removeMember } = api.boards.removeMember.useMutation();
+	const { mutateAsync: updateMember } = useMutation({
+		mutationFn: ({ boardId, memberId, body }: { boardId: number; memberId: number; body: UpdateMemberBody }) =>
+			httpClient.patch(`/boards/${boardId}/members/${memberId}`, body),
+	});
+
+	const { mutateAsync: removeBoard } = useMutation({
+		mutationFn: ({ boardId }: { boardId: number }) => httpClient.delete(`/boards/${boardId}`),
+	});
+
+	const { mutateAsync: removeMember } = useMutation({
+		mutationFn: ({ boardId, memberId }: { boardId: number; memberId: number }) =>
+			httpClient.delete(`/boards/${boardId}/members/${memberId}`),
+	});
 
 	const {
 		register,
@@ -57,8 +81,8 @@ function BoardSettingsPage() {
 		formState: { errors },
 		setValue,
 	} = useForm<Values>({
-		resolver: zodResolver(BoardBodyValidator.partial()),
-		values: {
+		resolver: zodResolver(BoardBodyValidator),
+		defaultValues: {
 			name: board?.name,
 			imageUrl: board?.imageUrl,
 		},
@@ -68,8 +92,8 @@ function BoardSettingsPage() {
 
 	const onSubmit = handleSubmit(async (data) => {
 		await updateBoard({
-			id: boardId,
-			board: data,
+			id: boardId as number,
+			body: data,
 		});
 	});
 
@@ -80,25 +104,31 @@ function BoardSettingsPage() {
 	}, [board?.imageUrl]);
 
 	const handleDelete = async () => {
+		if (!boardId) {
+			toast.error("Board not found");
+			return;
+		}
 		if (member?.role === "OWNER") {
-			await removeBoard(boardId ?? "");
+			await removeBoard({ boardId });
 		} else {
-			await removeMember(boardId);
+			await removeMember({ boardId, memberId: member?.id as number });
 		}
 
 		await router.push("/dashboard");
 	};
 
-	const removeBoardMember = async (id: string) => {
-		await removeMember(id);
+	const removeBoardMember = async (id: number) => {
+		await removeMember({ boardId: boardId as number, memberId: id });
 		await refetch();
 	};
 
-	const updateMemberRole = async (id: string, role: MemberRole) => {
+	const updateMemberRole = async (id: number, role: MemberRole) => {
 		await updateMember({
-			boardId,
+			boardId: boardId as number,
 			memberId: id,
-			role,
+			body: {
+				role,
+			},
 		});
 		await refetch();
 	};
@@ -176,12 +206,12 @@ function BoardSettingsPage() {
 										<li key={member.id} className="flex justify-between gap-x-3">
 											<div className="flex gap-x-3">
 												<Avatar
-													name={member.firstName ?? undefined}
-													src={member.profileImageUrl ?? undefined}
+													name={member.user.firstName ?? undefined}
+													src={member.user.profileImageUrl ?? undefined}
 												/>
 												<div>
 													<span className="block text-slate-300">
-														{member.firstName} {member.lastName}
+														{member.user.firstName} {member.user.lastName}
 													</span>
 												</div>
 											</div>
